@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="LastFewDigits:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/LastFewDigits_jar</output-path>
+    <root id="archive" name="LastFewDigits.jar">
+      <element id="module-output" name="LastFewDigits" />
+    </root>
+  </artifact>
+</component>
