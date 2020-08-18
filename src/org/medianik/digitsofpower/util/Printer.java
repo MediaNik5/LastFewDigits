@@ -5,6 +5,8 @@ import java.util.Iterator;
 
 public class Printer {
 
+    long firstKey, step, lastKeyInRow, lastKey;
+
     int width, high;
     int widthSeparating;
     HashMap<Long, String> data;
@@ -15,75 +17,80 @@ public class Printer {
         this.width = width;
         this.widthSeparating = widthSeparating;
         this.data = map;
+        initialize();
+    }
+
+    private void initialize(){
+        Iterator<Long> iterator = data.keySet().iterator();
+
+        firstKey = iterator.next();
+        step = iterator.next()-firstKey;
+        lastKeyInRow = (width-1)*step + firstKey;
+        lastKey = lastKeyInRow;
+        while (iterator.hasNext())
+            lastKey = iterator.next();
     }
 
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder(data.size()*10);
 
-        Iterator<Long> iterator = data.keySet().iterator();
-        long firstKey = iterator.next();
-        long step = iterator.next()-firstKey;
-        long lastKeyInRow = (width-1)*step + firstKey;
-        long lastKey = lastKeyInRow;
-        while (iterator.hasNext())
-            lastKey = iterator.next();
+        high = (int) Math.ceil(lastKey/(double)(lastKeyInRow + step));
 
-        high = (int) Math.ceil(lastKey/(double)(lastKeyInRow+step));
-
-        feelRows(sb, firstKey, step, lastKey);
+        feelRows(sb);
 
         return sb.toString();
     }
 
-    private void feelRows(StringBuilder sb, long firstKey, long step, long lastKey){
-        setSeparator(firstKey);
+    private void feelRows(StringBuilder sb){
+        setUpSeparator();
 
         sb.append(separator);
-        sb.append(feelFirstRow(firstKey, step));
+        feelFirstRow(sb);
         sb.append('\n').append('\n');
 
-        sb.append(feelRowsExceptFirst(step, lastKey));
+        feelRowsExceptFirst(sb);
     }
 
-    private void setSeparator(long anyKey){
+    private void setUpSeparator(){
         separator = SimpleUtil.repeat(
                 " ",
                 SimpleUtil.countNumberOfTargets(
-                        data.get(anyKey),
+                        data.get(firstKey),
                         " ") +
-                        SimpleUtil.numberOfDigits(Integer.parseInt(data.get(anyKey).trim()))
+                        SimpleUtil.numberOfDigits(Integer.parseInt(data.get(firstKey).trim()))
         );
     }
 
-    private StringBuilder feelRowsExceptFirst(long step, long lastKey) {
-        StringBuilder sb = new StringBuilder((int) (lastKey/step));
-
-        sb.append(feelLeadingKeyAndSpaces(0));
+    private void feelRowsExceptFirst(StringBuilder sb) {
+        feelLeadingKeyAndSpaces(sb, 0);
 
         for(int i = 0; i < high-1; i++) {
-            sb.append(feelSingleRow(i * width, (i + 1) * width));
+            feelSingleRow(sb, i * width, (i + 1) * width);
             sb.append('\n');
-            if(i % widthSeparating == widthSeparating - 1 && i > 0)
+
+            if(isSeparationNeeded(i))
                 sb.append('\n');
 
-            sb.append(
-                    feelLeadingKeyAndSpaces(
-                            data.keySet().toArray(
-                                    new Long[0])[
-                                    (i+1)*width
-                                    ] - step
-                    )
+            feelLeadingKeyAndSpaces(
+                    sb,
+                    data.keySet().toArray(
+                            new Long[0])
+                            [(i+1)*width] - step
             );
         }
 
-        sb.append(feelSingleRow((high - 1)*width, data.size()));
-
-        return sb;
+        feelSingleRow(sb, (high - 1)*width, data.size());
     }
 
-    private StringBuilder feelSingleRow(int firstIncluding, int lastExclusive) {
-        return SimpleUtil.setStringsInRowWithSeparation(
+
+    private boolean isSeparationNeeded(int row) {
+        return row % widthSeparating == widthSeparating - 1 && row > 0;
+    }
+
+    private void feelSingleRow(StringBuilder sb, int firstIncluding, int lastExclusive) {
+        SimpleUtil.setStringsInRowWithSeparation(
+                sb,
                 data.values().toArray(new String[0]),
                 firstIncluding,
                 lastExclusive,
@@ -91,20 +98,20 @@ public class Printer {
         );
     }
 
-    private StringBuilder feelLeadingKeyAndSpaces(long toAppend) {
-        int substring = SimpleUtil.numberOfDigits(toAppend);
+    private void feelLeadingKeyAndSpaces(StringBuilder sb, long keyToAppend) {
+        int substring = SimpleUtil.numberOfDigits(keyToAppend);
         if(substring >= separator.length())
             substring = separator.length()-1;
 
-        return new StringBuilder()
-                .append(separator.substring(substring))
-                .append(toAppend)
-                .append(" ");
+       sb.append(separator.substring(substring))
+               .append(keyToAppend)
+               .append(" ");
     }
 
-    private StringBuilder feelFirstRow(long first, long step){
-        return SimpleUtil.setNumbersInRowWIthSeparation(
-                first,
+    private void feelFirstRow(StringBuilder sb){
+        SimpleUtil.setNumbersInRowWIthSeparation(
+                sb,
+                firstKey,
                 step,
                 width,
                 separator
